@@ -18,7 +18,7 @@ public DataContext CreateDbContext(string[] args)
     return new DataContext(optionsBuilder.Options);
 }
 
-Затем вы создаете миграцию и обновляете базы данных (в PMC):
+Затем вы создаете миграцию и обновляете базы данных (в Package Manager Console):
 > add-migration init
 > update-database
 
