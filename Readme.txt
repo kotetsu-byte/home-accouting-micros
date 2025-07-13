@@ -8,6 +8,10 @@ services.AddDbContext<DataContext>(options =>
     options.UseNpgsql("Host=localhost;Port=5432;Database=micros_test_task;Username=postgres;Password=jalol;"); <- Здесь вы пишете данные о базе данных.
 });
 
+То же самое вам придется сделать в файле DataContextFactory.cs:
+
+
+
 Затем вы создаете миграцию и обновляете базы данных (в PMC):
 > add-migration init
 > update-database
