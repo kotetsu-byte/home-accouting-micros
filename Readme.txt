@@ -10,7 +10,13 @@ services.AddDbContext<DataContext>(options =>
 
 То же самое вам придется сделать в файле DataContextFactory.cs:
 
+public DataContext CreateDbContext(string[] args)
+{
+    var optionsBuilder = new DbContextOptionsBuilder<DataContext>();
+    optionsBuilder.UseNpgsql("Host=localhost;Port=5432;Database=micros_test_task;Username=postgres;Password=jalol;"); <- Здесь
 
+    return new DataContext(optionsBuilder.Options);
+}
 
 Затем вы создаете миграцию и обновляете базы данных (в PMC):
 > add-migration init
