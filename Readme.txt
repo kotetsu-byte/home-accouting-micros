@@ -8,7 +8,7 @@ services.AddDbContext<DataContext>(options =>
     options.UseNpgsql("Host=localhost;Port=5432;Database=micros_test_task;Username=postgres;Password=jalol;"); <- Здесь вы пишете данные о базе данных.
 });
 
-То же самое вам придется сделать в файле DataContextFactory.cs:
+То же самое вам придется сделать в файле DataContextFactory.cs (папка Data):
 
 public DataContext CreateDbContext(string[] args)
 {
