@@ -11,6 +11,7 @@ namespace Домашняя_бухгалтерия.Interfaces
     {
         ICollection<Transaction> GetAllTransactions(int userId);
         Transaction GetTransactionById(int userId, int id);
+        object GetFieldsFromTransactions(ICollection<Transaction> transactions);
         bool Create(Transaction transaction);
         bool Update(Transaction transaction);
         bool Delete(int userId, int id);

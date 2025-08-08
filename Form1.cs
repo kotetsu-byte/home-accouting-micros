@@ -5,6 +5,7 @@ using LiveChartsCore;
 using LiveChartsCore.SkiaSharpView;
 using LiveChartsCore.SkiaSharpView.WinForms;
 using Домашняя_бухгалтерия.Interfaces;
+using Домашняя_бухгалтерия.Models;
 
 namespace Домашняя_бухгалтерия
 {
@@ -14,6 +15,11 @@ namespace Домашняя_бухгалтерия
         private readonly ITransactionRepository _transactionRepository;
         private readonly ICategoryRepository _categoryRepository;
         private readonly IUserRepository _userRepository;
+        private CartesianChart cartesianChart;
+        private List<double> values;
+        private List<string> categoryNames;
+        private ColumnSeries<double> columnSeries;
+        private Axis xAxis;
 
         public Form1(int? userId, ITransactionRepository transactionRepository, ICategoryRepository categoryRepository, IUserRepository userRepository)
         {
@@ -24,7 +30,42 @@ namespace Домашняя_бухгалтерия
             _userRepository = userRepository;
             IOFilterContent();
             CategoriesFilterContent();
-            AddChart();
+
+            columnSeries = new ColumnSeries<double>
+            {
+                Values = values,
+                Name = "Транзакции"
+            };
+
+            xAxis = new Axis
+            {
+                Labels = categoryNames,
+                Name = "Категории"
+            };
+
+            cartesianChart = new CartesianChart
+            {
+                Dock = DockStyle.Bottom,
+                Height = 200,
+                Series = new ISeries[]
+                {
+                    columnSeries      
+                },
+                XAxes = new[]
+                {
+                    xAxis
+                },
+                YAxes = new[]
+                {
+                    new Axis
+                    {
+                        Name = "Сумма",
+                        MinLimit = 0
+                    }
+                }
+            };
+            UpdateChart(_transactionRepository.GetAllTransactions((int)_userId));
+            Controls.Add(cartesianChart);
         }
 
         private void Form1_Load(object sender, EventArgs e)
@@ -35,7 +76,7 @@ namespace Домашняя_бухгалтерия
 
             var transactions = _transactionRepository.GetAllTransactions((int)_userId);
 
-            var selectedFields = transactions.Select(t => new { t.Id, t.Type, t.CategoryName, t.Date, t.Amount, t.Comment }).ToList();
+            var selectedFields = _transactionRepository.GetFieldsFromTransactions(transactions);
 
             dataGridView1.DataSource = selectedFields;
             dataGridView1.Columns["Id"].Visible = false;
@@ -85,7 +126,7 @@ namespace Домашняя_бухгалтерия
 
             var transactions = _transactionRepository.GetAllTransactions((int)_userId);
 
-            var selectedFields = transactions.Select(t => new { t.Id, t.Type, t.CategoryName, t.Date, t.Amount, t.Comment }).ToList();
+            var selectedFields = _transactionRepository.GetFieldsFromTransactions(transactions);
 
             dataGridView1.DataSource = selectedFields;
             dataGridView1.Columns["Id"].Visible = false;
@@ -102,51 +143,7 @@ namespace Домашняя_бухгалтерия
                 }
             };
 
-
-            var grouped = transactions.GroupBy(t => t.CategoryName).Select(g => new
-            {
-                CategoryName = g.Key,
-                TotalAmount = g.Sum(x => x.Amount)
-            }).ToList();
-
-            var categoryNames = grouped.Select(x => x.CategoryName).ToList();
-            var totalAmounts = grouped.Select(x => x.TotalAmount).ToList();
-
-            var values = totalAmounts.Select(x => (double)x).ToArray();
-
-            var cartesianChart = new CartesianChart()
-            {
-                Dock = DockStyle.Bottom,
-                Height = 200,
-                Series = new ISeries[]
-                {
-                    new ColumnSeries<double>
-                    {
-                        Values = values,
-                        Name = "Транзакции"
-                    }
-                },
-
-                XAxes = new[]
-                {
-                    new Axis
-                    {
-                        Labels = categoryNames,
-                        Name = "Категории"
-                    }
-                },
-
-                YAxes = new[]
-                {
-                    new Axis
-                    {
-                        Name = "Сумма",
-                        MinLimit = 0
-                    }
-                }
-            };
-
-            this.Controls.Add(cartesianChart);
+            UpdateChart(transactions);
         }
 
         private void IOFilterContent()
@@ -161,13 +158,15 @@ namespace Домашняя_бухгалтерия
 
             var transactions = _transactionRepository.GetAllTransactions((int)_userId);
 
-            var selectedFields = transactions.Select(t => new { t.Id, t.Type, t.CategoryName, t.Date, t.Amount, t.Comment }).ToList();
+            var incomes = transactions.Where(t => t.Type == "Доход").ToList();
+
+            var outcomes = transactions.Where(t => t.Type == "Расход").ToList();
 
             switch (selectedIndex)
             {
                 case "Доход":
                     {
-                        var sourse = selectedFields.Where(t => t.Type == "Доход").ToList();
+                        var sourse = _transactionRepository.GetFieldsFromTransactions(incomes);
                         dataGridView1.DataSource = sourse;
                         dataGridView1.Columns["Id"].Visible = false;
 
@@ -183,58 +182,12 @@ namespace Домашняя_бухгалтерия
                             }
                         };
 
-                        var incomes = transactions.Where(t => t.Type == "Доход").ToList();
-
-                        var grouped = incomes.GroupBy(t => t.CategoryName).Select(g => new
-                        {
-                            CategoryName = g.Key,
-                            TotalAmount = g.Sum(x => x.Amount)
-                        }).ToList();
-
-                        var categoryNames = grouped.Select(x => x.CategoryName).ToList();
-                        var totalAmounts = grouped.Select(x => x.TotalAmount).ToList();
-
-                        var values = totalAmounts.Select(x => (double)x).ToArray();
-
-                        var cartesianChart = new CartesianChart()
-                        {
-                            Dock = DockStyle.Bottom,
-                            Height = 200,
-                            Series = new ISeries[]
-                            {
-                                new ColumnSeries<double>
-                                {
-                                    Values = values,
-                                    Name = "Транзакции"
-                                }
-                                        },
-
-                            XAxes = new[]
-                                        {
-                                new Axis
-                                {
-                                    Labels = categoryNames,
-                                    Name = "Категории"
-                                }
-                            },
-
-                            YAxes = new[]
-                            {
-                                new Axis
-                                {
-                                    Name = "Сумма",
-                                    MinLimit = 0
-                                }
-                            }
-                        };
-
-                        this.Controls.Add(cartesianChart);
-
+                        UpdateChart(incomes);
                         break;
                     }
                 case "Расход":
                     {
-                        var source = selectedFields.Where(t => t.Type == "Расход").ToList();
+                        var source = _transactionRepository.GetFieldsFromTransactions(outcomes);
                         dataGridView1.DataSource = source;
                         dataGridView1.Columns["Id"].Visible = false;
 
@@ -249,53 +202,8 @@ namespace Домашняя_бухгалтерия
                                 }
                             }
                         };
-                        var outcomes = transactions.Where(t => t.Type == "Расход").ToList();
 
-                        var grouped = outcomes.GroupBy(t => t.CategoryName).Select(g => new
-                        {
-                            CategoryName = g.Key,
-                            TotalAmount = g.Sum(x => x.Amount)
-                        }).ToList();
-
-                        var categoryNames = grouped.Select(x => x.CategoryName).ToList();
-                        var totalAmounts = grouped.Select(x => x.TotalAmount).ToList();
-
-                        var values = totalAmounts.Select(x => (double)x).ToArray();
-
-                        var cartesianChart = new CartesianChart()
-                        {
-                            Dock = DockStyle.Bottom,
-                            Height = 200,
-                            Series = new ISeries[]
-                            {
-                                new ColumnSeries<double>
-                                {
-                                    Values = values,
-                                    Name = "Транзакции"
-                                }
-                                        },
-
-                            XAxes = new[]
-                                        {
-                                new Axis
-                                {
-                                    Labels = categoryNames,
-                                    Name = "Категории"
-                                }
-                            },
-
-                            YAxes = new[]
-                            {
-                                new Axis
-                                {
-                                    Name = "Сумма",
-                                    MinLimit = 0
-                                }
-                            }
-                        };
-
-                        this.Controls.Add(cartesianChart);
-
+                        UpdateChart(outcomes);
                         break;
                     }
             }
@@ -305,7 +213,7 @@ namespace Домашняя_бухгалтерия
         {
             var transactions = _transactionRepository.GetAllTransactions((int)_userId);
 
-            var selectedFields = transactions.Select(t => new { t.Id, t.Type, t.CategoryName, t.Date, t.Amount, t.Comment }).ToList();
+            var selectedFields = _transactionRepository.GetFieldsFromTransactions(transactions);
 
             dataGridView1.DataSource = selectedFields;
             dataGridView1.Columns["Id"].Visible = false;
@@ -322,50 +230,7 @@ namespace Домашняя_бухгалтерия
                 }
             };
 
-            var grouped = transactions.GroupBy(t => t.CategoryName).Select(g => new
-            {
-                CategoryName = g.Key,
-                TotalAmount = g.Sum(x => x.Amount)
-            }).ToList();
-
-            var categoryNames = grouped.Select(x => x.CategoryName).ToList();
-            var totalAmounts = grouped.Select(x => x.TotalAmount).ToList();
-
-            var values = totalAmounts.Select(x => (double)x).ToArray();
-
-            var cartesianChart = new CartesianChart()
-            {
-                Dock = DockStyle.Bottom,
-                Height = 200,
-                Series = new ISeries[]
-                {
-                    new ColumnSeries<double>
-                    {
-                        Values = values,
-                        Name = "Транзакции"
-                    }
-                },
-
-                XAxes = new[]
-                {
-                    new Axis
-                    {
-                        Labels = categoryNames,
-                        Name = "Категории"
-                    }
-                },
-
-                YAxes = new[]
-                {
-                    new Axis
-                    {
-                        Name = "Сумма",
-                        MinLimit = 0
-                    }
-                }
-            };
-
-            this.Controls.Add(cartesianChart);
+            UpdateChart(transactions);
         }
 
         private void CategoriesFilterContent()
@@ -381,7 +246,7 @@ namespace Домашняя_бухгалтерия
 
             var display = transactions.Where(t => selectedCategories.Contains(t.CategoryName)).ToList();
 
-            var selectedFields = display.Select(t => new { t.Id, t.Type, t.CategoryName, t.Date, t.Amount, t.Comment }).ToList();
+            var selectedFields = _transactionRepository.GetFieldsFromTransactions(display);
 
             dataGridView1.DataSource = selectedFields;
             dataGridView1.Columns["Id"].Visible = false;
@@ -398,50 +263,7 @@ namespace Домашняя_бухгалтерия
                 }
             };
 
-            var grouped = display.GroupBy(t => t.CategoryName).Select(g => new
-            {
-                CategoryName = g.Key,
-                TotalAmount = g.Sum(x => x.Amount)
-            }).ToList();
-
-            var categoryNames = grouped.Select(x => x.CategoryName).ToList();
-            var totalAmounts = grouped.Select(x => x.TotalAmount).ToList();
-
-            var values = totalAmounts.Select(x => (double)x).ToArray();
-
-            var cartesianChart = new CartesianChart()
-            {
-                Dock = DockStyle.Bottom,
-                Height = 200,
-                Series = new ISeries[]
-                {
-                    new ColumnSeries<double>
-                    {
-                        Values = values,
-                        Name = "Транзакции"
-                    }
-                },
-
-                XAxes = new[]
-                {
-                    new Axis
-                    {
-                        Labels = categoryNames,
-                        Name = "Категории"
-                    }
-                },
-
-                YAxes = new[]
-                {
-                    new Axis
-                    {
-                        Name = "Сумма",
-                        MinLimit = 0
-                    }
-                }
-            };
-
-            this.Controls.Add(cartesianChart);
+            UpdateChart(display);
         }
 
         private void buttonPeriodFilter_Click(object sender, EventArgs e)
@@ -453,7 +275,7 @@ namespace Домашняя_бухгалтерия
 
             var filtered = transactions.Where(t => t.Date >= fromDate && t.Date <= toDate).ToList();
 
-            var selectedFields = filtered.Select(t => new { t.Id, t.Type, t.CategoryName, t.Date, t.Amount, t.Comment }).ToList();
+            var selectedFields = _transactionRepository.GetFieldsFromTransactions(filtered);
 
             dataGridView1.DataSource = selectedFields;
             dataGridView1.Columns["Id"].Visible = false;
@@ -470,50 +292,7 @@ namespace Домашняя_бухгалтерия
                 }
             };
 
-            var grouped = filtered.GroupBy(t => t.CategoryName).Select(g => new
-            {
-                CategoryName = g.Key,
-                TotalAmount = g.Sum(x => x.Amount)
-            }).ToList();
-
-            var categoryNames = grouped.Select(x => x.CategoryName).ToList();
-            var totalAmounts = grouped.Select(x => x.TotalAmount).ToList();
-
-            var values = totalAmounts.Select(x => (double)x).ToArray();
-
-            var cartesianChart = new CartesianChart()
-            {
-                Dock = DockStyle.Bottom,
-                Height = 200,
-                Series = new ISeries[]
-                {
-                    new ColumnSeries<double>
-                    {
-                        Values = values,
-                        Name = "Транзакции"
-                    }
-                },
-
-                XAxes = new[]
-                {
-                    new Axis
-                    {
-                        Labels = categoryNames,
-                        Name = "Категории"
-                    }
-                },
-
-                YAxes = new[]
-                {
-                    new Axis
-                    {
-                        Name = "Сумма",
-                        MinLimit = 0
-                    }
-                }
-            };
-
-            this.Controls.Add(cartesianChart);
+            UpdateChart(filtered);
         }
 
         private void buttonCustomCategories_Click(object sender, EventArgs e)
@@ -523,56 +302,6 @@ namespace Домашняя_бухгалтерия
             this.Hide();
 
             form.Show();
-        }
-
-        private void AddChart()
-        {
-            var transactions = _transactionRepository.GetAllTransactions((int)_userId);
-
-            var grouped = transactions.GroupBy(t => t.CategoryName).Select(g => new
-            {
-                CategoryName = g.Key,
-                TotalAmount = g.Sum(x => x.Amount)
-            }).ToList();
-
-            var categoryNames = grouped.Select(x => x.CategoryName).ToList();
-            var totalAmounts = grouped.Select(x => x.TotalAmount).ToList();
-
-            var values = totalAmounts.Select(x => (double)x).ToArray();
-
-            var cartesianChart = new CartesianChart()
-            {
-                Dock = DockStyle.Bottom,
-                Height = 200,
-                Series = new ISeries[]
-                {
-                    new ColumnSeries<double>
-                    {
-                        Values = values,
-                        Name = "Транзакции"
-                    }
-                },
-
-                XAxes = new[]
-                {
-                    new Axis
-                    {
-                        Labels = categoryNames,
-                        Name = "Категории"
-                    }
-                },
-
-                YAxes = new[]
-                {
-                    new Axis
-                    {
-                        Name = "Сумма",
-                        MinLimit = 0
-                    }
-                }
-            };
-
-            this.Controls.Add(cartesianChart);
         }
 
         private void Form1_FormClosed(object sender, FormClosedEventArgs e)
@@ -591,11 +320,43 @@ namespace Домашняя_бухгалтерия
 
         private void buttonDeleteUser_Click(object sender, EventArgs e)
         {
-            _userRepository.Delete((int)_userId);
+            DialogResult result = MessageBox.Show(
+                "Вы действительно хотите удалить свою учётную запись?",
+                "Подтверждение",
+                MessageBoxButtons.YesNo,
+                MessageBoxIcon.Question
+            );
+            if(result == DialogResult.Yes)
+            {
+                _userRepository.Delete((int)_userId);
 
-            Login login = new Login(_userRepository, _transactionRepository, _categoryRepository);
-            this.Hide();
-            login.Show();
+                Login login = new Login(_userRepository, _transactionRepository, _categoryRepository);
+                this.Hide();
+                login.Show();
+            } else
+            {
+                return;
+            }
+            return;
+        }
+
+        private void UpdateChart(ICollection<Transaction> transactions)
+        {
+            var grouped = transactions.GroupBy(t => t.CategoryName).Select(g => new
+            {
+                CategoryName = g.Key,
+                TotalAmount = g.Sum(x => x.Amount)
+            }).ToList();
+
+            var cns = grouped.Select(x => x.CategoryName).ToList();
+            var vals = grouped.Select(x => (double)x.TotalAmount).ToList();
+
+            values = vals;
+            columnSeries.Values = values.ToArray();
+            categoryNames = cns;
+            xAxis.Labels = categoryNames;
+
+            cartesianChart.Update();
         }
     }
 }

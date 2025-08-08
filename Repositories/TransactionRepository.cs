@@ -28,6 +28,11 @@ namespace Домашняя_бухгалтерия.Repositories
             return _context.Transactions.Where(t => t.User.Id == userId && t.Id == id).FirstOrDefault();
         }
 
+        public object GetFieldsFromTransactions(ICollection<Transaction> transactions)
+        {
+            return transactions.Select(t => new { t.Id, t.Type, t.CategoryName, t.Date, t.Amount, t.Comment }).ToList();
+        }
+
         public bool Create(Transaction transaction)
         {
             _context.Transactions.Add(transaction);

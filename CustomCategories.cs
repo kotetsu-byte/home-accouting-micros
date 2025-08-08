@@ -57,6 +57,7 @@ namespace Домашняя_бухгалтерия
 
         private void buttonEditIncome_Click(object sender, EventArgs e)
         {
+            if (listBoxCustomCategoriesIncome.Items.Count == 0) return;
             int selectedId = (int)listBoxCustomCategoriesIncome.SelectedValue;
             CustomCategoriesEdit form = new CustomCategoriesEdit(_userId, selectedId, _userRepository, _transactionRepository, _categoryRepository);
 
@@ -66,6 +67,7 @@ namespace Домашняя_бухгалтерия
 
         private void buttonEditOutcome_Click(object sender, EventArgs e)
         {
+            if (listBoxCustomCategoriesOutcome.Items.Count == 0) return;
             int selectedId = (int)listBoxCustomCategoriesOutcome.SelectedValue;
             CustomCategoriesEdit form = new CustomCategoriesEdit(_userId, selectedId, _userRepository, _transactionRepository, _categoryRepository);
 
@@ -84,6 +86,7 @@ namespace Домашняя_бухгалтерия
 
         private void buttonDeleteIncome_Click(object sender, EventArgs e)
         {
+            if (listBoxCustomCategoriesIncome.Items.Count == 0) return;
             int selectedId = (int)listBoxCustomCategoriesIncome.SelectedValue;
             _categoryRepository.Delete(selectedId);
             listBoxCustomCategoriesIncome.DataSource = null;
@@ -100,6 +103,7 @@ namespace Домашняя_бухгалтерия
 
         private void buttonDeleteOutcome_Click(object sender, EventArgs e)
         {
+            if (listBoxCustomCategoriesOutcome.Items.Count == 0) return;
             int selectedId = (int)listBoxCustomCategoriesOutcome.SelectedValue;
             _categoryRepository.Delete(selectedId);
 

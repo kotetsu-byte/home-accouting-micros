@@ -77,15 +77,14 @@ namespace Домашняя_бухгалтерия
 
         private void comboBoxIO_SelectedIndexChanged(object sender, EventArgs e)
         {
-            var categories = _categoryRepository.GetAllCategories((int)_userId);
             if (comboBoxIO.SelectedIndex == 0)
             {
-                var incomes = categories.Where(c => c.Type == "Доход").Select(c => c.Name).ToList();
+                var incomes = _categoryRepository.GetSeparateCategories((int)_userId, "Доход");
                 comboBoxCategory.DataSource = incomes;
             }
             else if (comboBoxIO.SelectedIndex == 1)
             {
-                var outcomes = categories.Where(c => c.Type == "Расход").Select(c => c.Name).ToList();
+                var outcomes = _categoryRepository.GetSeparateCategories((int)_userId, "Расход");
                 comboBoxCategory.DataSource = outcomes;
             }
         }

@@ -11,6 +11,7 @@ namespace Домашняя_бухгалтерия.Interfaces
     {
         ICollection<Category> GetAllCategories(int userId);
         Category GetCategoryById(int id);
+        ICollection<Category> GetSeparateCategories(int userId, string type);
         bool Create(Category category);
         bool Update(Category category);
         bool Delete(int id);
