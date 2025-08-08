@@ -28,11 +28,11 @@ namespace Домашняя_бухгалтерия.Repositories
             return _context.Categories.Where(c => c.Id == id).FirstOrDefault();
         }
 
-        public ICollection<Category> GetSeparateCategories(int userId, string type)
+        public ICollection<string> GetSeparateCategories(int userId, string type)
         {
             var categories = GetAllCategories(userId);
 
-            return categories.Where(c => c.Type == type).ToList();
+            return categories.Where(c => c.Type == type).Select(c => c.Name).ToList();
         }
 
         public bool Create(Category category)
